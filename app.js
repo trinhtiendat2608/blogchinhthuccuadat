@@ -5,15 +5,16 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { Server } = require('socket.io');
+require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// ✅ Đã thay mật khẩu MongoDB thành "Trinhdat.2608"
+// ✅ MongoDB URI
 const MONGO_URI = 'mongodb+srv://dathmuk117:Trinhdat.2608@cluster0.aaixf2i.mongodb.net/chatApp?retryWrites=true&w=majority&appName=Cluster0';
 
-// ✅ Mô hình tin nhắn
+// ✅ Mongoose schema
 const messageSchema = new mongoose.Schema({
   name: String,
   content: String,
@@ -21,7 +22,7 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// ✅ Kết nối MongoDB
+// ✅ MongoDB connect
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -34,9 +35,19 @@ mongoose.connect(MONGO_URI, {
 // ✅ Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'client')));
 
-// ✅ Socket.IO: nhận và gửi tin nhắn
+// ✅ Trang chủ
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'index.html'));
+});
+
+// ✅ API test
+app.get('/ping', (req, res) => {
+  res.send('✅ Server OK');
+});
+
+// ✅ Socket.IO: xử lý chat
 io.on('connection', (socket) => {
   console.log('🟢 Client connected:', socket.id);
 
@@ -45,14 +56,14 @@ io.on('connection', (socket) => {
     socket.emit('load messages', messages);
   });
 
-  // Nhận tin nhắn mới từ client
+  // Nhận tin nhắn mới
   socket.on('chat message', async (msg) => {
     try {
       if (!msg.name || !msg.content) return;
       const saved = await new Message(msg).save();
-      io.emit('chat message', saved); // Gửi lại cho tất cả client
+      io.emit('chat message', saved);
     } catch (err) {
-      console.error('❌ Lỗi khi lưu tin nhắn:', err);
+      console.error('❌ Error saving message:', err);
     }
   });
 
@@ -61,13 +72,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// ✅ Kiểm tra server
-app.get('/ping', (req, res) => {
-  res.send('✅ Server OK');
-});
-
-// ✅ Khởi động server
+// ✅ Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
