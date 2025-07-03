@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chi tiết bài viết</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f8fb;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #004d99;
+      margin-bottom: 10px;
+    }
+
+    .post-image {
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .content {
+      font-size: 18px;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    .comments-section {
+      border-top: 1px solid #ddd;
+      padding-top: 30px;
+    }
+
+    .comment {
+      background: #f1f1f1;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .comment-author {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .comment-form textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: none;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .comment-form button {
+      padding: 10px 20px;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .comment-form button:hover {
+      background-color: #005fa3;
+    }
+
+    .login-alert {
+      background-color: #fff3cd;
+      color: #856404;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="post-title">Tiêu đề bài viết</h1>
+    <img src="" alt="Hình ảnh bài viết" class="post-image" id="post-image"/>
+    <p class="content" id="post-content">Nội dung bài viết...</p>
+
+    <div class="comments-section">
+      <h2>Bình luận</h2>
+      <div id="comment-list">
+        <!-- Bình luận sẽ được chèn vào đây -->
+      </div>
+
+      <div id="comment-form-container">
+        <!-- Hiển thị nếu người dùng đã đăng nhập -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Giả sử đã có sẵn dữ liệu người dùng đăng nhập
+    const isLoggedIn = localStorage.getItem("token") ? true : false;
+
+    const commentFormContainer = document.getElementById("comment-form-container");
+
+    if (isLoggedIn) {
+      commentFormContainer.innerHTML = `
+        <form id="comment-form" class="comment-form">
+          <textarea rows="3" id="comment-input" placeholder="Viết bình luận..."></textarea>
+          <button type="submit">Gửi bình luận</button>
+        </form>
+      `;
+    } else {
+      commentFormContainer.innerHTML = `
+        <div class="login-alert">
+          Bạn cần <a href="login.html">đăng nhập</a> để bình luận.
+        </div>
+      `;
+    }
+
+    // Giả lập xử lý gửi bình luận
+    document.addEventListener("submit", function(e) {
+      if (e.target && e.target.id === "comment-form") {
+        e.preventDefault();
+        const content = document.getElementById("comment-input").value.trim();
+        if (content) {
+          const commentList = document.getElementById("comment-list");
+          const commentDiv = document.createElement("div");
+          commentDiv.className = "comment";
+          commentDiv.innerHTML = `
+            <div class="comment-author">Bạn</div>
+            <div>${content}</div>
+          `;
+          commentList.prepend(commentDiv);
+          document.getElementById("comment-input").value = "";
+        }
+      }
+    });
+
+    // TODO: Kết nối API để lấy chi tiết bài viết và danh sách bình luận
+  </script>
+</body>
+</html>
