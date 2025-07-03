@@ -1,79 +1,54 @@
-const express = require('express');
-const http = require('http');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const path = require('path');
-const { Server } = require('socket.io');
-require('dotenv').config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const path = require("path");
+const http = require("http");
+const socketIo = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = socketIo(server);
 
-// ✅ MongoDB URI
-const MONGO_URI = 'mongodb+srv://dathmuk117:Trinhdat.2608@cluster0.aaixf2i.mongodb.net/chatApp?retryWrites=true&w=majority&appName=Cluster0';
+// 🔐 MongoDB URI chuẩn
+const mongoURI = "mongodb+srv://dathmuk117:Trinhtiendat.2608@cluster0.aaixf2i.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
-// ✅ Mongoose schema
-const messageSchema = new mongoose.Schema({
-  name: String,
-  content: String,
-  createdAt: { type: Date, default: Date.now }
-});
-const Message = mongoose.model('Message', messageSchema);
-
-// ✅ MongoDB connect
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('✅ MongoDB connected');
-}).catch(err => {
-  console.error('❌ MongoDB connect error:', err);
-});
-
-// ✅ Middleware
+// ⚙️ Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'client')));
+app.use(express.json());
 
-// ✅ Trang chủ
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'index.html'));
-});
+// 📁 Dẫn tới folder chứa web
+app.use(express.static(path.join(__dirname, "client")));
 
-// ✅ API test
-app.get('/ping', (req, res) => {
-  res.send('✅ Server OK');
-});
+// 🌐 MongoDB Connect
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB error:", err));
 
-// ✅ Socket.IO: xử lý chat
-io.on('connection', (socket) => {
-  console.log('🟢 Client connected:', socket.id);
+// 📦 Routes
+app.use("/api/posts", require("./routes/postRoutes"));
+app.use("/api/comments", require("./routes/commentRoutes"));
 
-  // Gửi tất cả tin nhắn cũ
-  Message.find().sort({ createdAt: 1 }).then(messages => {
-    socket.emit('load messages', messages);
+// ⚡ WebSocket Chat
+const ChatMessage = require("./models/message");
+io.on("connection", socket => {
+  ChatMessage.find().sort({ createdAt: 1 }).then(messages => {
+    socket.emit("load messages", messages.map(m => ({ name: m.name, content: m.message })));
   });
 
-  // Nhận tin nhắn mới
-  socket.on('chat message', async (msg) => {
-    try {
-      if (!msg.name || !msg.content) return;
-      const saved = await new Message(msg).save();
-      io.emit('chat message', saved);
-    } catch (err) {
-      console.error('❌ Error saving message:', err);
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log('🔴 Client disconnected:', socket.id);
+  socket.on("chat message", async data => {
+    const newMsg = new ChatMessage({
+      name: data.name,
+      message: data.content
+    });
+    await newMsg.save();
+    io.emit("chat message", data);
   });
 });
 
-// ✅ Start server
+// 🌍 Server chạy
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server chạy tại http://localhost:${PORT}`);
 });
