@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Liên hệ với admin</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+  <header>
+    <h1>Liên hệ với Trịnh Tiến Đạt</h1>
+    <nav>
+      <a href="index.html">Trang chủ</a>
+      <a href="post.html">Bài viết</a>
+      <a href="chat.html">Chat</a>
+      <a href="login.html">Đăng nhập</a>
+      <a href="register.html">Đăng ký</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h3>Gửi tin nhắn</h3>
+      <form id="contact-form">
+        <input type="text" id="name" placeholder="Họ tên của bạn" required /><br />
+        <input type="email" id="email" placeholder="Email" required /><br />
+        <textarea id="message" rows="5" placeholder="Nội dung..." required></textarea><br />
+        <button type="submit">Gửi</button>
+      </form>
+      <p id="response-msg"></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Trịnh Tiến Đạt - SĐT: 0911511264</p>
+  </footer>
+
+  <script>
+    const form = document.getElementById("contact-form");
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const message = document.getElementById("message").value;
+
+      fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            document.getElementById("response-msg").textContent = "Tin nhắn đã gửi thành công!";
+            form.reset();
+          } else {
+            document.getElementById("response-msg").textContent = "Gửi thất bại. Vui lòng thử lại.";
+          }
+        })
+        .catch(() => {
+          document.getElementById("response-msg").textContent = "Có lỗi xảy ra.";
+        });
+    });
+  </script>
+</body>
+</html>

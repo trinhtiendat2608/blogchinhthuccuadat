@@ -4,150 +4,243 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Chi tiết bài viết</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+  <header>
+    <h1>Chi tiết bài viết</h1>
+    <nav>
+      <a href="index.html">Trang chủ</a>
+      <a href="contact.html">Liên hệ</a>
+      <a href="chat.html">Chat</a>
+    </nav>
+  </header>
+
+  <main>
+    <article>
+      <h2 id="post-title"></h2>
+      <p id="post-content"></p>
+    </article>
+
+    <hr/>
+
+    <!-- 🔽 FORM BÌNH LUẬN -->
+    <section id="comment-section">
+      <h3>Bình luận</h3>
+      <div id="comment-list"></div>
+
+      <div id="comment-form">
+        <textarea id="comment-input" placeholder="Nhập bình luận..." rows="4" style="width:100%"></textarea><br/>
+        <button onclick="submitComment()">Gửi bình luận</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Trịnh Tiến Đạt - SĐT: 0911511264</p>
+  </footer>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get("id");
+    const username = localStorage.getItem("username"); // ✅ kiểm tra người dùng đăng nhập
+
+    // Tải bài viết
+    async function loadPost() {
+      const res = await fetch("/api/posts");
+      const posts = await res.json();
+      const post = posts.find(p => p._id === postId);
+
+      if (!post) {
+        document.getElementById("post-title").innerText = "Không tìm thấy bài viết.";
+        return;
+      }
+
+      document.getElementById("post-title").innerText = post.title;
+      document.getElementById("post-content").innerText = post.content;
+    }
+
+    // Tải bình luận
+    async function loadComments() {
+      const res = await fetch(`/api/comments/${postId}`);
+      const comments = await res.json();
+
+      const list = document.getElementById("comment-list");
+      list.innerHTML = "";
+
+      if (!comments.length) {
+        list.innerHTML = "<p>Chưa có bình luận nào.</p>";
+        return;
+      }
+
+      comments.forEach(c => {
+        const div = document.createElement("div");
+        div.innerHTML = `<strong>${c.user}</strong>: ${c.content}<hr/>`;
+        list.appendChild(div);
+      });
+    }
+
+    // Gửi bình luận
+    <!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bài viết - Blog Y Khoa</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f8fb;
-      margin: 0;
-      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f8f9fa;
+      padding-top: 30px;
     }
 
     .container {
       max-width: 800px;
-      margin: 40px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
-    }
-
-    h1 {
-      font-size: 28px;
-      color: #004d99;
-      margin-bottom: 10px;
-    }
-
-    .post-image {
-      width: 100%;
-      height: auto;
+      background-color: white;
+      padding: 40px;
       border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .post-title {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #222;
       margin-bottom: 20px;
     }
 
-    .content {
-      font-size: 18px;
-      line-height: 1.6;
-      margin-bottom: 40px;
+    .post-meta {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 30px;
     }
 
-    .comments-section {
-      border-top: 1px solid #ddd;
-      padding-top: 30px;
+    .post-content {
+      font-size: 18px;
+      line-height: 1.7;
+      color: #333;
+      white-space: pre-line;
+    }
+
+    hr {
+      margin: 40px 0;
+    }
+
+    #comment-section {
+      margin-top: 40px;
     }
 
     .comment {
-      background: #f1f1f1;
-      padding: 15px;
-      border-radius: 10px;
       margin-bottom: 15px;
+      padding: 12px;
+      background: #f1f1f1;
+      border-radius: 8px;
     }
 
-    .comment-author {
-      font-weight: bold;
-      margin-bottom: 5px;
+    .comment strong {
+      color: #0056b3;
     }
 
-    .comment-form textarea {
+    textarea {
       width: 100%;
       padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      resize: none;
-      font-size: 16px;
       margin-bottom: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      resize: vertical;
     }
 
-    .comment-form button {
-      padding: 10px 20px;
-      background-color: #0077cc;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .comment-form button:hover {
-      background-color: #005fa3;
-    }
-
-    .login-alert {
-      background-color: #fff3cd;
-      color: #856404;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
+    button {
+      padding: 8px 16px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 id="post-title">Tiêu đề bài viết</h1>
-    <img src="" alt="Hình ảnh bài viết" class="post-image" id="post-image"/>
-    <p class="content" id="post-content">Nội dung bài viết...</p>
 
-    <div class="comments-section">
-      <h2>Bình luận</h2>
-      <div id="comment-list">
-        <!-- Bình luận sẽ được chèn vào đây -->
-      </div>
-
-      <div id="comment-form-container">
-        <!-- Hiển thị nếu người dùng đã đăng nhập -->
-      </div>
-    </div>
+<div class="container">
+  <div id="post">
+    <div class="post-title" id="post-title"></div>
+    <div class="post-meta" id="post-time"></div>
+    <div class="post-content" id="post-content"></div>
   </div>
 
-  <script>
-    // Giả sử đã có sẵn dữ liệu người dùng đăng nhập
-    const isLoggedIn = localStorage.getItem("token") ? true : false;
+  <hr/>
 
-    const commentFormContainer = document.getElementById("comment-form-container");
+  <section id="comment-section">
+    <h4>Bình luận</h4>
+    <div id="comment-list"></div>
 
-    if (isLoggedIn) {
-      commentFormContainer.innerHTML = `
-        <form id="comment-form" class="comment-form">
-          <textarea rows="3" id="comment-input" placeholder="Viết bình luận..."></textarea>
-          <button type="submit">Gửi bình luận</button>
-        </form>
-      `;
-    } else {
-      commentFormContainer.innerHTML = `
-        <div class="login-alert">
-          Bạn cần <a href="login.html">đăng nhập</a> để bình luận.
-        </div>
-      `;
+    <div id="comment-form">
+      <textarea id="comment-input" rows="4" placeholder="Nhập bình luận..."></textarea>
+      <button class="btn btn-primary" onclick="submitComment()">Gửi bình luận</button>
+    </div>
+  </section>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const postId = params.get("id");
+  const username = localStorage.getItem("username");
+
+  async function loadPost() {
+    const res = await fetch("/api/posts");
+    const posts = await res.json();
+    const post = posts.find(p => p._id === postId);
+
+    if (!post) {
+      document.getElementById("post-title").innerText = "Không tìm thấy bài viết.";
+      return;
     }
 
-    // Giả lập xử lý gửi bình luận
-    document.addEventListener("submit", function(e) {
-      if (e.target && e.target.id === "comment-form") {
-        e.preventDefault();
-        const content = document.getElementById("comment-input").value.trim();
-        if (content) {
-          const commentList = document.getElementById("comment-list");
-          const commentDiv = document.createElement("div");
-          commentDiv.className = "comment";
-          commentDiv.innerHTML = `
-            <div class="comment-author">Bạn</div>
-            <div>${content}</div>
-          `;
-          commentList.prepend(commentDiv);
-          document.getElementById("comment-input").value = "";
-        }
-      }
+    document.getElementById("post-title").innerText = post.title;
+    document.getElementById("post-content").innerText = post.content;
+    document.getElementById("post-time").innerText = "🕒 Đăng lúc: " + new Date(post.createdAt || Date.now()).toLocaleString("vi-VN");
+  }
+
+  async function loadComments() {
+    const res = await fetch(`/api/comments/${postId}`);
+    const comments = await res.json();
+
+    const list = document.getElementById("comment-list");
+    list.innerHTML = "";
+
+    if (!comments.length) {
+      list.innerHTML = "<p>Chưa có bình luận nào.</p>";
+      return;
+    }
+
+    comments.forEach(c => {
+      const div = document.createElement("div");
+      div.className = "comment";
+      div.innerHTML = `<strong>${c.user}</strong>: ${c.content}`;
+      list.appendChild(div);
+    });
+  }
+
+  async function submitComment() {
+    const content = document.getElementById("comment-input").value.trim();
+    if (!username) {
+      alert("Bạn phải đăng nhập để bình luận.");
+      window.location.href = "/login.html";
+      return;
+    }
+    if (!content) return;
+
+    await fetch("/api/comments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId, user: username, content })
     });
 
-    // TODO: Kết nối API để lấy chi tiết bài viết và danh sách bình luận
-  </script>
+    document.getElementById("comment-input").value = "";
+    loadComments();
+  }
+
+  loadPost();
+  loadComments();
+</script>
+
 </body>
 </html>
+
